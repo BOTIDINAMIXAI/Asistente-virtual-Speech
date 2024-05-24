@@ -1,6 +1,8 @@
 import streamlit as st
 import openai
 from dotenv import load_dotenv
+import json
+
 import nltk
 import os
 import tempfile
@@ -42,10 +44,15 @@ def preprocesar_texto(texto):
     tokens = [stemmer.stem(word) for word in tokens]
     return " ".join(tokens)
 
-# Cargar la clave API desde el archivo .env
-load_dotenv()
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "botidinamix-g.json"  # Reemplaza 'key.json' con el nombre de tu archivo de credenciales
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# Cargar credenciales desde Streamlit secrets
+openai.api_key = st.secrets["OPENAI_API_KEY"]
+google_creds_json = st.secrets["GOOGLE_APPLICATION_CREDENTIALS"]="botidinamix-g.json"  
+
+# Convertir el JSON de Google a un diccionario (si es necesario)
+google_creds_dict = json.loads(google_creds_json)
+
+# Configurar las credenciales de Google (si es necesario)
+# ... (Aquí debes usar google_creds_dict para configurar las credenciales de la biblioteca que uses para interactuar con Google) ...
 
 # Instancia el cliente de Text-to-Speech
 client = texttospeech.TextToSpeechClient()
