@@ -11,7 +11,8 @@ from nltk.stem import SnowballStemmer
 import PyPDF2
 import time
 from google.cloud import texttospeech
-from Historial.historial_chat import cargar_historial, guardar_historial  # Importa las funciones
+from Historial import historial_chat 
+import cargar_historial, guardar_historial  # Importa las funciones
 from streamlit_webrtc import webrtc_streamer, WebRtcMode
 import av
 
