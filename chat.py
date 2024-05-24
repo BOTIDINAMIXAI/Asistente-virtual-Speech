@@ -44,13 +44,13 @@ def preprocesar_texto(texto):
 
 # Cargar credenciales desde Streamlit secrets
 openai.api_key = st.secrets["OPENAI_API_KEY"]
-google_creds_json = st.secrets["GOOGLE_APPLICATION_CREDENTIALS"]="botidinamix-g.json"  
+google_creds_json = st.secrets["GOOGLE_APPLICATION_CREDENTIALS"]
 
 # Convertir el JSON de Google a un diccionario (si es necesario)
 google_creds_dict = json.loads(google_creds_json)
 
 # Configurar las credenciales de Google (si es necesario)
-# ... (Aquí debes usar google_creds_dict para configurar las credenciales de la biblioteca que uses para interactuar con Google) ...
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = google_creds_dict
 
 # Instancia el cliente de Text-to-Speech
 client = texttospeech.TextToSpeechClient()
@@ -106,13 +106,15 @@ def main():
             st.session_state.mensajes = []
             st.session_state.mostrar_historial = False
             st.success("Historial borrado correctamente")
+    
     # --- Chatbot ---
     if 'mensajes' not in st.session_state:
-        st.session_state.mensajes = cargar_historial()
+        st.session_state.mensajes = []
 
     for mensaje in st.session_state.mensajes:
         with st.chat_message(mensaje["role"]):
             st.markdown(mensaje["content"])
+
     # Función para manejar la entrada de audio
     def on_audio(audio_bytes):
         with st.spinner("Transcribiendo..."):
@@ -202,19 +204,18 @@ def main():
             st.session_state.mensajes.append({"role": "user", "content": pregunta_usuario})
             with st.chat_message("user"):
                 st.markdown(pregunta_usuario)
-# ... (dentro del bloque else, después de verificar si hay pregunta_usuario)
 
-        with st.spinner("Ana está pensando..."):  # Mostrar spinner de carga
-            if archivo_pdf:
-                texto_pdf = extraer_texto_pdf(archivo_pdf)
-                texto_preprocesado = preprocesar_texto(texto_pdf)
-            else:
-                texto_preprocesado = ""  # Sin contexto de PDF si no se carga un archivo
+            with st.spinner("Ana está pensando..."):  # Mostrar spinner de carga
+                if archivo_pdf:
+                    texto_pdf = extraer_texto_pdf(archivo_pdf)
+                    texto_preprocesado = preprocesar_texto(texto_pdf)
+                else:
+                    texto_preprocesado = ""  # Sin contexto de PDF si no se carga un archivo
 
-            respuesta = obtener_respuesta(pregunta_usuario, texto_preprocesado, modelo, temperatura)
-            st.session_state.mensajes.append({"role": "assistant", "content": respuesta})
-            with st.chat_message("assistant"):
-                st.markdown(respuesta)
+                respuesta = obtener_respuesta(pregunta_usuario, texto_preprocesado, modelo, temperatura)
+                st.session_state.mensajes.append({"role": "assistant", "content": respuesta})
+                with st.chat_message("assistant"):
+                    st.markdown(respuesta)
 
 if __name__ == "__main__":
     main()
