@@ -138,84 +138,76 @@ def main():
                 on_audio=on_audio,
             )
             st.session_state["run_webrtc"] = False
-    else:
-        for mensaje in st.session_state.mensajes:
-            with st.chat_message(mensaje["role"]):
-                st.markdown(mensaje["content"])
 
-        # Selección de modelo de lenguaje
-        st.subheader("🧠 Configuración del Modelo")
-        modelo = st.selectbox(
-            "Selecciona el modelo:",
-            ["gpt-3.5-turbo", "gpt-4"],
-            index=0,
-            help="Elige el modelo de lenguaje de OpenAI que prefieras."
+    for mensaje in st.session_state.mensajes:
+        with st.chat_message(mensaje["role"]):
+            st.markdown(mensaje["content"])
+
+    # Selección de modelo de lenguaje
+    st.subheader("🧠 Configuración del Modelo")
+    modelo = st.selectbox(
+        "Selecciona el modelo:",
+        ["gpt-3.5-turbo", "gpt-4"],
+        index=0,
+        help="Elige el modelo de lenguaje de OpenAI que prefieras."
+    )
+
+    # --- Opciones adicionales ---
+    st.markdown("---")
+    temperatura = st.slider("🌡️ Temperatura", min_value=0.0, max_value=1.0, value=0.5, step=0.1)
+
+    # --- Video de fondo ---
+    with st.container():
+        st.markdown(
+            f"""
+            <style>
+            #video-container {{
+                position: relative;
+                width: 100%;
+                padding-bottom: 56.25%;
+                background-color: lightblue;
+                overflow: hidden;
+            }}
+            #background-video {{
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+            }}
+            </style>
+            <div id="video-container">
+                <video id="background-video" autoplay loop muted playsinline>
+                    <source src="https://cdn.leonardo.ai/users/645c3d5c-ca1b-4ce8-aefa-a091494e0d09/generations/89dda365-bf17-4867-87d4-bd918d4a2818/89dda365-bf17-4867-87d4-bd918d4a2818.mp4" type="video/mp4">
+                </video>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
-        # --- Opciones adicionales ---
-        st.markdown("---")
-        temperatura = st.slider("🌡️ Temperatura", min_value=0.0, max_value=1.0, value=0.5, step=0.1)
+    # --- Área principal de la aplicación ---
+    st.header("💬 Hablar con Ana asesor")
 
-        # --- Video de fondo ---
-        with st.container():
-            st.markdown(
-                f"""
-                <style>
-                #video-container {{
-                    position: relative;
-                    width: 100%;
-                    padding-bottom: 56.25%;
-                    background-color: lightblue;
-                    overflow: hidden;
-                }}
-                #background-video {{
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                }}
-                </style>
-                <div id="video-container">
-                    <video id="background-video" autoplay loop muted playsinline>
-                        <source src="https://cdn.leonardo.ai/users/645c3d5c-ca1b-4ce8-aefa-a091494e0d09/generations/89dda365-bf17-4867-87d4-bd918d4a2818/89dda365-bf17-4867-87d4-bd918d4a2818.mp4" type="video/mp4">
-                    </video>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+    # Carga de archivo PDF
+    archivo_pdf = st.file_uploader("📂 Cargar PDF", type='pdf')
 
-        # --- Área principal de la aplicación ---
-        st.header("💬 Hablar con Ana asesor")
+    pregunta_usuario = st.chat_input("Pregunta:")
+    if pregunta_usuario:
+        st.session_state.mensajes.append({"role": "user", "content": pregunta_usuario})
+        with st.chat_message("user"):
+            st.markdown(pregunta_usuario)
 
-        # Carga de archivo PDF
-        archivo_pdf = st.file_uploader("📂 Cargar PDF", type='pdf')
+        with st.spinner("Ana está pensando..."):  # Mostrar spinner de carga
+            if archivo_pdf:
+                texto_pdf = extraer_texto_pdf(archivo_pdf)
+                texto_preprocesado = preprocesar_texto(texto_pdf)
+            else:
+                texto_preprocesado = ""  # Sin contexto de PDF si no se carga un archivo
 
-        # --- Chatbot ---
-        if 'mensajes' not in st.session_state:
-            st.session_state.mensajes = []
-
-        for mensaje in st.session_state.mensajes:
-            with st.chat_message(mensaje["role"]):
-                st.markdown(mensaje["content"])
-
-        pregunta_usuario = st.chat_input("Pregunta:")
-        if pregunta_usuario:
-            st.session_state.mensajes.append({"role": "user", "content": pregunta_usuario})
-            with st.chat_message("user"):
-                st.markdown(pregunta_usuario)
-
-            with st.spinner("Ana está pensando..."):  # Mostrar spinner de carga
-                if archivo_pdf:
-                    texto_pdf = extraer_texto_pdf(archivo_pdf)
-                    texto_preprocesado = preprocesar_texto(texto_pdf)
-                else:
-                    texto_preprocesado = ""  # Sin contexto de PDF si no se carga un archivo
-
-                respuesta = obtener_respuesta(pregunta_usuario, texto_preprocesado, modelo, temperatura)
-                st.session_state.mensajes.append({"role": "assistant", "content": respuesta})
-                with st.chat_message("assistant"):
-                    st.markdown(respuesta)
+            respuesta = obtener_respuesta(pregunta_usuario, texto_preprocesado, modelo, temperatura)
+            st.session_state.mensajes.append({"role": "assistant", "content": respuesta})
+            with st.chat_message("assistant"):
+                st.markdown(respuesta)
 
 if __name__ == "__main__":
     main()
