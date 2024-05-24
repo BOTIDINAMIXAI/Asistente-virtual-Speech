@@ -11,8 +11,6 @@ from nltk.stem import SnowballStemmer
 import PyPDF2
 import time
 from google.cloud import texttospeech
-from Historial import historial_chat 
-import cargar_historial, guardar_historial  # Importa las funciones
 from streamlit_webrtc import webrtc_streamer, WebRtcMode
 import av
 
@@ -138,16 +136,6 @@ def main():
                 on_audio=on_audio,
             )
             st.session_state["run_webrtc"] = False
-
-    # Mostrar historial si el botón fue presionado
-    if st.session_state.get("mostrar_historial", False):
-        st.subheader("Historial de Chat:")
-        if st.session_state.mensajes:
-            for mensaje in st.session_state.mensajes:
-                with st.chat_message(mensaje["role"]):
-                    st.markdown(mensaje["content"])
-        else:
-            st.info("No hay mensajes en el historial.")
     else:
         for mensaje in st.session_state.mensajes:
             with st.chat_message(mensaje["role"]):
